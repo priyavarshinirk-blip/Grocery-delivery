@@ -8,10 +8,11 @@
 
 ## Team Details
 | Name | Roll No | Department | Section |
-|Priyavarshini.R|2462351|ADSE|5BTCSDS|
-|S.Gopika Anand|2462355|ADSE|5BTCSDS|
-|Rohith.V|2462353|ADSE|5BTCSDS|
-|Rakshwanth.K|2462352|ADSE|5BTCSDS|
+|---|---:|---|---|
+| Priyavarshini.R | 2462351 | ADSE | 5BTCSDS |
+| S.Gopika Anand | 2462355 | ADSE | 5BTCSDS |
+| Rohith.V | 2462353 | ADSE | 5BTCSDS |
+| Rakshwanth.K | 2462352 | ADSE | 5BTCSDS |
 
 ## Problem Statement
 Quick-commerce grocery platforms need a backend that coordinates four distinct actors — customers, dark-store staff, delivery partners, and admins — through a single, consistent order lifecycle. This project implements that backend: it validates stock at the correct dark store before accepting an order, enforces a strict pick → pack → assign → deliver workflow instead of freeform status edits, and gives store managers visibility into operational performance.
@@ -248,19 +249,3 @@ The frontend also provides a live customer demonstration at `http://localhost:51
 2. `npm start`
 3. Import `docs/postman_collection.json` into Postman, set `baseUrl` if not running on port 5000, and run the **Auth** folder first (it populates tokens), then run the remaining folders in order.
 
-## University Submission Checklist
-- [x] Node.js + Express.js backend
-- [x] MongoDB + Mongoose models and indexes
-- [x] JWT authentication and bcrypt password hashing
-- [x] Server-side validation middleware
-- [x] Centralized JSON error handling
-- [x] Thirteen implemented functional modules (minimum required: twelve)
-- [x] Postman collection covering the API workflow and representative failures
-- [x] `.gitignore` excludes `.env` and `node_modules`
-- [x] `.env.example` included
-- [ ] Create or confirm the GitHub repository and replace the repository placeholder above
-- [ ] Push the complete source with contribution history from all team members
-- [ ] Prepare the single LMS PDF with a Team Details page, GitHub link, overview, and module summary
-- [ ] Add at least seven report pages, code/output screenshots, and the required file name
-- [ ] Prepare the 10–15 slide PPT covering problem, objectives, architecture, modules, schema, demo, learnings, and challenges
-- [ ] Rehearse the 8–10 minute demo and ensure every team member can explain every module
