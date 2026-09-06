@@ -6,6 +6,8 @@ localResources:
   collections:
     - ../docs/postman_collection.json
 
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
 cloudResources:
   collections:
     ../postman/collections/P19 - Online Grocery Delivery Platform: af2532d3-5b35-49a2-83e9-70875418e20c
