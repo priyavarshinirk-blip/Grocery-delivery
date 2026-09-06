@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "email": "not-an-email"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 400', () => pm.response.to.have.status(400));
+      pm.test('errorCode is VALIDATION_ERROR', () => pm.expect(pm.response.json().errorCode).to.eql('VALIDATION_ERROR'));
+    language: text/javascript
+order: 2000

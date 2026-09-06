@@ -1,0 +1,786 @@
+{
+  "info": {
+    "name": "P19 - Online Grocery Delivery Platform",
+    "description": "Full API collection for the Quick Commerce grocery delivery backend. Run folders top-to-bottom (Auth first) - later requests depend on tokens/ids captured by earlier ones via collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "adminToken", "value": "" },
+    { "key": "staffToken", "value": "" },
+    { "key": "customerToken", "value": "" },
+    { "key": "deliveryToken", "value": "" },
+    { "key": "storeId", "value": "" },
+    { "key": "productId", "value": "" },
+    { "key": "stockId", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "deliveryPartnerId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register Customer (first-time bootstrap via direct DB seed recommended)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Priya Sharma\",\n  \"email\": \"customer1@grocery.test\",\n  \"password\": \"Password123!\",\n  \"role\": \"customer\",\n  \"phone\": \"9876543210\",\n  \"defaultAddress\": { \"line1\": \"12 MG Road\", \"area\": \"Koramangala\", \"pincode\": \"560034\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Response has token', () => pm.expect(json.data.token).to.be.a('string'));",
+                  "pm.collectionVariables.set('customerToken', json.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - Validation Failure (missing fields)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"not-an-email\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('errorCode is VALIDATION_ERROR', () => pm.expect(pm.response.json().errorCode).to.eql('VALIDATION_ERROR'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register - Duplicate Email Conflict",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Priya Sharma\",\n  \"email\": \"customer1@grocery.test\",\n  \"password\": \"Password123!\",\n  \"role\": \"customer\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test('errorCode is DUPLICATE_KEY', () => pm.expect(pm.response.json().errorCode).to.eql('DUPLICATE_KEY'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Store Staff (seeded)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"staff.koramangala@grocery.test\",\n  \"password\": \"Password123!\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('staffToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Admin (seeded)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@grocery.test\",\n  \"password\": \"Password123!\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('adminToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Delivery Partner (seeded)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"delivery@grocery.test\",\n  \"password\": \"Password123!\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('deliveryToken', pm.response.json().data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Wrong Password (Auth Failure)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@grocery.test\",\n  \"password\": \"wrong-password\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": ["pm.test('Status is 401', () => pm.response.to.have.status(401));"] }
+            }
+          ]
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Update Current User Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/auth/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Customer\",\n  \"email\": \"updated-customer@grocery.test\",\n  \"phone\": \"9876543210\",\n  \"defaultAddress\": {\n    \"line1\": \"12 MG Road\",\n    \"area\": \"Koramangala\",\n    \"pincode\": \"560034\"\n  }\n}"
+            }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Get Current User - No Token (Auth Failure)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 401', () => pm.response.to.have.status(401));"] } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Dark Stores (Admin)",
+      "item": [
+        {
+          "name": "Create Dark Store - Happy Path",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/dark-stores",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"HSR Layout Dark Store\",\n  \"area\": \"HSR Layout, Bengaluru\",\n  \"location\": { \"coordinates\": [77.6387, 12.9121] },\n  \"serviceablePincodes\": [\"560102\"]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('storeId', pm.response.json().data.store._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Dark Store - Wrong Role (Authorization Failure)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/dark-stores",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Should Fail\",\n  \"area\": \"X\",\n  \"location\": { \"coordinates\": [0,0] }\n}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 403', () => pm.response.to.have.status(403));"] } }
+          ]
+        },
+        {
+          "name": "List Dark Stores",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": "{{baseUrl}}/dark-stores"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Get Dark Store - Not Found",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/dark-stores/000000000000000000000000"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 404', () => pm.response.to.have.status(404));"] } }
+          ]
+        },
+        {
+          "name": "Update Dark Store",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/dark-stores/{{storeId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"serviceablePincodes\": [\"560102\", \"560068\"]\n}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Products (Admin)",
+      "item": [
+        {
+          "name": "Create Product - Happy Path",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Organic Tomatoes\",\n  \"category\": \"Fruits & Vegetables\",\n  \"price\": 35,\n  \"unit\": \"kg\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('productId', pm.response.json().data.product._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Product - Validation Failure (negative price)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/products",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Bad Product\",\n  \"category\": \"Misc\",\n  \"price\": -5\n}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 400', () => pm.response.to.have.status(400));"] } }
+          ]
+        },
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": "{{baseUrl}}/products"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Store Stock",
+      "item": [
+        {
+          "name": "Upsert Stock - Happy Path",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/store-stock",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storeId\": \"{{storeId}}\",\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 3,\n  \"reorderPoint\": 10\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('stockId', pm.response.json().data.stock._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Low Stock Alerts (Module 9)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/store-stock/low-stock?storeId={{storeId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Contains the just-created low-stock product', () => pm.expect(pm.response.json().data.count).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Adjust Stock - Insufficient Stock Conflict",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/store-stock/{{stockId}}/adjust",
+            "body": { "mode": "raw", "raw": "{\n  \"delta\": -1000\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test('errorCode is INSUFFICIENT_STOCK', () => pm.expect(pm.response.json().errorCode).to.eql('INSUFFICIENT_STOCK'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Stock By Store",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/store-stock/store/{{storeId}}"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Orders - Placement & Workflow",
+      "item": [
+        {
+          "name": "Place Order - Business Rule Conflict (Out of Stock)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [ { \"productId\": \"{{productId}}\", \"quantity\": 999 } ],\n  \"deliveryAddress\": { \"line1\": \"HSR Layout\", \"area\": \"HSR\", \"pincode\": \"560102\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test('errorCode is INSUFFICIENT_STOCK', () => pm.expect(pm.response.json().errorCode).to.eql('INSUFFICIENT_STOCK'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Place Order - No Serviceable Store (Business Rule Conflict)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [ { \"productId\": \"{{productId}}\", \"quantity\": 1 } ],\n  \"deliveryAddress\": { \"line1\": \"Nowhere\", \"area\": \"Nowhere\", \"pincode\": \"999999\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test('errorCode is NO_SERVICEABLE_STORE', () => pm.expect(pm.response.json().errorCode).to.eql('NO_SERVICEABLE_STORE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Place Order - Happy Path",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [ { \"productId\": \"{{productId}}\", \"quantity\": 1 } ],\n  \"deliveryAddress\": { \"line1\": \"HSR Layout\", \"area\": \"HSR\", \"pincode\": \"560102\" },\n  \"deliverySlot\": { \"date\": \"2026-09-10\", \"startTime\": \"10:00\", \"endTime\": \"12:00\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('Order status is PLACED', () => pm.expect(json.data.order.status).to.eql('PLACED'));",
+                  "pm.collectionVariables.set('orderId', json.data.order._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Order - Wrong Owner (Authorization Failure)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{deliveryToken}}" }],
+            "url": "{{baseUrl}}/orders/{{orderId}}"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 403', () => pm.response.to.have.status(403));"] } }
+          ]
+        },
+        {
+          "name": "Get Order - Not Found",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": "{{baseUrl}}/orders/000000000000000000000000"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 404', () => pm.response.to.have.status(404));"] } }
+          ]
+        },
+        {
+          "name": "Customer Order History (Module 11)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": "{{baseUrl}}/orders"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Update Status - Invalid Transition (PLACED -> DELIVERED)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"DELIVERED\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test('errorCode is INVALID_TRANSITION', () => pm.expect(pm.response.json().errorCode).to.eql('INVALID_TRANSITION'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Status - Wrong Role (Customer tries to pick)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customerToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"PICKING\"\n}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 403', () => pm.response.to.have.status(403));"] } }
+          ]
+        },
+        {
+          "name": "Mark Order Picking (Module 5) - Happy Path",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"PICKING\"\n}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Mark Order Packed (Module 5) - Happy Path",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"PACKED\"\n}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Assign Delivery Partner (Module 6) - Happy Path",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders/{{orderId}}/assign",
+            "body": { "mode": "raw", "raw": "{}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Order status is ASSIGNED', () => pm.expect(pm.response.json().data.status).to.eql('ASSIGNED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Assign Delivery Partner - Invalid Transition (already assigned)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders/{{orderId}}/assign",
+            "body": { "mode": "raw", "raw": "{}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 409', () => pm.response.to.have.status(409));"] } }
+          ]
+        },
+        {
+          "name": "Mark Out For Delivery (Module 7) - Happy Path",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{deliveryToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"OUT_FOR_DELIVERY\"\n}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Mark Delivered (Module 7) - Happy Path",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{deliveryToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"DELIVERED\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Order status is DELIVERED', () => pm.expect(pm.response.json().data.status).to.eql('DELIVERED'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Status on Terminal Order (Invalid Transition)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{deliveryToken}}" }
+            ],
+            "url": "{{baseUrl}}/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"FAILED\"\n}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 409', () => pm.response.to.have.status(409));"] } }
+          ]
+        },
+        {
+          "name": "Reorder (Module 11) - Happy Path",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": "{{baseUrl}}/orders/{{orderId}}/reorder"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 201', () => pm.response.to.have.status(201));"] } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Delivery Partners",
+      "item": [
+        {
+          "name": "List Available Partners (Admin/Staff)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffToken}}" }],
+            "url": "{{baseUrl}}/delivery-partners?isAvailable=true"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Get My Delivery Partner Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{deliveryToken}}" }],
+            "url": "{{baseUrl}}/delivery-partners/me"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Set Availability - Conflict While Order In Progress",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{deliveryToken}}" }
+            ],
+            "url": "{{baseUrl}}/delivery-partners/me/availability",
+            "body": { "mode": "raw", "raw": "{\n  \"isAvailable\": true\n}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200 or 409 depending on current state', () => pm.expect([200,409]).to.include(pm.response.code));"] } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Reports",
+      "item": [
+        {
+          "name": "Store & Delivery Performance Report (Module 12) - Admin",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/reports/performance"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Performance Report - Authorization Failure (customer)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{customerToken}}" }],
+            "url": "{{baseUrl}}/reports/performance"
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": ["pm.test('Status is 403', () => pm.response.to.have.status(403));"] } }
+          ]
+        }
+      ]
+    }
+  ]
+}

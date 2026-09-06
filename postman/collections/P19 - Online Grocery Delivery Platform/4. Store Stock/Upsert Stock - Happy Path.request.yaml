@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/store-stock"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{adminToken}}
+body:
+  type: text
+  content: |-
+    {
+      "storeId": "{{storeId}}",
+      "productId": "{{productId}}",
+      "quantity": 3,
+      "reorderPoint": 10
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 201', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('stockId', pm.response.json().data.stock._id);
+    language: text/javascript
+order: 1000

@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/delivery-partners/me/availability"
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{deliveryToken}}
+body:
+  type: text
+  content: |-
+    {
+      "isAvailable": true
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Status is 200 or 409 depending on current state', () => pm.expect([200,409]).to.include(pm.response.code));
+    language: text/javascript
+order: 3000

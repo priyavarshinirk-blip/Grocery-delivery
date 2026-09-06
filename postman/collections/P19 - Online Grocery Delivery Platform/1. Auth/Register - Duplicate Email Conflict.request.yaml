@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Priya Sharma",
+      "email": "customer1@grocery.test",
+      "password": "Password123!",
+      "role": "customer"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 409', () => pm.response.to.have.status(409));
+      pm.test('errorCode is DUPLICATE_KEY', () => pm.expect(pm.response.json().errorCode).to.eql('DUPLICATE_KEY'));
+    language: text/javascript
+order: 3000

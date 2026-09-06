@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/orders"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{customerToken}}
+body:
+  type: text
+  content: |-
+    {
+      "items": [ { "productId": "{{productId}}", "quantity": 1 } ],
+      "deliveryAddress": { "line1": "HSR Layout", "area": "HSR", "pincode": "560102" },
+      "deliverySlot": { "date": "2026-09-10", "startTime": "10:00", "endTime": "12:00" }
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 201', () => pm.response.to.have.status(201));
+      const json = pm.response.json();
+      pm.test('Order status is PLACED', () => pm.expect(json.data.order.status).to.eql('PLACED'));
+      pm.collectionVariables.set('orderId', json.data.order._id);
+    language: text/javascript
+order: 3000

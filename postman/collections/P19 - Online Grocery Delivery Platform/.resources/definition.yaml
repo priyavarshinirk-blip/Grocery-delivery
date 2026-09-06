@@ -1,0 +1,13 @@
+$kind: collection
+description: Full API collection for the Quick Commerce grocery delivery backend. Run folders top-to-bottom (Auth first) - later requests depend on tokens/ids captured by earlier ones via collection variables.
+variables:
+  baseUrl: http://localhost:5000/api
+  adminToken: ""
+  staffToken: ""
+  customerToken: ""
+  deliveryToken: ""
+  storeId: ""
+  productId: ""
+  stockId: ""
+  orderId: ""
+  deliveryPartnerId: ""

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Marketline mark">
+  <rect width="64" height="64" rx="12" fill="#143d35"/>
+  <path d="M17 18h30l-3 29H20l-3-29Zm7 0c0-5 3-8 8-8s8 3 8 8" fill="none" stroke="#e7f0dc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M28 33h8" stroke="#d7a84e" stroke-width="4" stroke-linecap="round"/>
+</svg>

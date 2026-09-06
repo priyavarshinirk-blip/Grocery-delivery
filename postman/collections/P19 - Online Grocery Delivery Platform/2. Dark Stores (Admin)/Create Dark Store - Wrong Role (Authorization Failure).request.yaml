@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/dark-stores"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{customerToken}}
+body:
+  type: text
+  content: |-
+    {
+      "name": "Should Fail",
+      "area": "X",
+      "location": { "coordinates": [0,0] }
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Status is 403', () => pm.response.to.have.status(403));
+    language: text/javascript
+order: 2000

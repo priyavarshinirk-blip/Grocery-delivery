@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/store-stock/{{stockId}}/adjust"
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{adminToken}}
+body:
+  type: text
+  content: |-
+    {
+      "delta": -1000
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 409', () => pm.response.to.have.status(409));
+      pm.test('errorCode is INSUFFICIENT_STOCK', () => pm.expect(pm.response.json().errorCode).to.eql('INSUFFICIENT_STOCK'));
+    language: text/javascript
+order: 3000

@@ -1,0 +1,26 @@
+$kind: http-request
+name: Register Customer (first-time bootstrap via direct DB seed recommended)
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Priya Sharma",
+      "email": "customer1@grocery.test",
+      "password": "Password123!",
+      "role": "customer",
+      "phone": "9876543210",
+      "defaultAddress": { "line1": "12 MG Road", "area": "Koramangala", "pincode": "560034" }
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 201', () => pm.response.to.have.status(201));
+      const json = pm.response.json();
+      pm.test('Response has token', () => pm.expect(json.data.token).to.be.a('string'));
+      pm.collectionVariables.set('customerToken', json.data.token);
+    language: text/javascript
+order: 1000

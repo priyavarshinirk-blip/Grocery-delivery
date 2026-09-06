@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/products"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{adminToken}}
+body:
+  type: text
+  content: |-
+    {
+      "name": "Organic Tomatoes",
+      "category": "Fruits & Vegetables",
+      "price": 35,
+      "unit": "kg"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 201', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('productId', pm.response.json().data.product._id);
+    language: text/javascript
+order: 1000
