@@ -4,7 +4,7 @@
 **Project Code**: P19  
 **Semester**: 5th Semester  
 **Section/Batch**: 5BTCSDS  
-**GitHub repository**: Add the final repository URL here before PDF submission.
+**GitHub repository**: https://github.com/priyavarshinirk-blip/Grocery-delivery
 
 ## Team Details
 | Name | Roll No | Department | Section |
